@@ -1,0 +1,4 @@
+# gspread==5.7.2
+# pygithub==1.58.1
+numpy==2.0.0
+faker==26.0.0
