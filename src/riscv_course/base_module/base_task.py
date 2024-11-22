@@ -40,6 +40,7 @@ class BaseTaskClass:
         self.run_timeout = RUN_TIMEOUT
         self.fail_on_first = fail_on_first_test
         self._array_align = array_align
+        self.allowed_symbols = []
         self.jail_exec = jail_exec
         self.jail_path = jail_path if jail_path is not None else os.environ.get("JAIL_PATH", "")
 
@@ -80,7 +81,7 @@ class BaseTaskClass:
     def _compile_internal(
         self, solution_name: str = "sol.s",
         compiler: str = "riscv64-unknown-linux-gnu-gcc",
-        compile_args: str = "-static",
+        compile_args: str = "-static"
     ) -> Optional[str]:
         """
         General method to compile work
@@ -95,16 +96,53 @@ class BaseTaskClass:
             f.write(self.solution)
             f.write("\n")
 
-        compile_command = f"{compiler} {compile_args} "\
-            f"{' '.join(name for name in self.check_files.keys())} "\
-            f"{solution_name} -o {os.path.join(self.jail_path, self.prog_name)}"
+        
+        # Compile checker code
+        obj_files = []
+        studwork_obj = os.path.join(self.jail_path, 'studwork.o')
+
+        for src_file in self.check_files.keys():
+            compile_command = f"{compiler} -c {compile_args} {src_file}"
+            p = subprocess.run(
+                shlex.split(compile_command),
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                timeout=self.compile_timeout, check=False,
+            )
+
+            if p.returncode != 0:
+                return f"Ошибка при компиляции кода системы проверки, файл {src_file} (обратитесь за помощью к авторам курса):\n{p.stdout.decode()}"
+            obj_files.append(src_file[:src_file.find('.')+1] + "o")
+
+        # Compile studwork
+        compile_command = f"{compiler} -c {compile_args} {solution_name} -o {studwork_obj}"
         p = subprocess.run(
             shlex.split(compile_command),
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             timeout=self.compile_timeout, check=False,
         )
+
         if p.returncode != 0:
-            return f"Ошибки при компиляции решения:\n{p.stdout.decode()}"
+            return f"Ошибка при компиляции решения:\n{p.stdout.decode()}"
+
+        p = subprocess.run(
+            shlex.split(f"nm -a {studwork_obj}"),
+            stdout=subprocess.PIPE, check=False,
+            timeout=self.compile_timeout
+        )
+        symbols = [x.split() for x in p.stdout.decode().splitlines()]
+
+        forbidden_symbols = [x[-1]  for x in symbols if x[-2] == "U" and x[-1] not in self.allowed_symbols]
+        if len(forbidden_symbols) > 1:
+            return f"В решении использованы запрещенные символы: " + ", ".join(forbidden_symbols)
+
+        compile_command = f"{compiler} {' '.join(obj_files)} {studwork_obj} {compile_args} -o {os.path.join(self.jail_path, self.prog_name)}"
+        p = subprocess.run(
+            shlex.split(compile_command),
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False,
+        )
+
+        if p.returncode != 0:
+            return f"Ошибка при линковке решения:\n{p.stdout.decode()}"
 
         return None  # compile is success
 

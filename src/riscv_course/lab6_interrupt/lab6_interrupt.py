@@ -84,6 +84,8 @@ class Lab6Interrupt(BaseTaskClass):
         self.c_ctype = int_utils.get_ctype_name(c_type)
         self.result_ctype = int_utils.get_ctype_name(result_type)
 
+        self.allowed_symbols = [ "a", "b", "c", "listener_table" ]
+
         self.check_files = {
             "main.cpp": MAIN_CPP
         }
