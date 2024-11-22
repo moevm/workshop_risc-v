@@ -67,6 +67,7 @@ class Lab5Daemon(BaseTaskClass):
         self.n_buttons = n_buttons
         self.n_leds = n_leds
         self.task = None
+        self.allowed_symbols = [ "delay", "set_led_status", "get_button_status" ]
 
         self.check_files = {
             "led.cpp": LED_CPP
