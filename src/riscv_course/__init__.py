@@ -1,7 +1,7 @@
 from .base_module import BaseTaskClass, CLIParser  # noqa: F401
 # from .lab1_asm_intro import Lab1AsmInto, Lab1CLIParser  # noqa: F401
 # from .lab3_condition import Lab3Condition, Lab3CLIParser  # noqa: F401
-
+from .token import generate_answer_token
 
 def __load_lab_modules():
     import importlib

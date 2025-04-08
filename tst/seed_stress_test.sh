@@ -51,7 +51,7 @@ do
   do
     echo "[${seed_counter}/${total_seeds}] Checking ${task} seed=${seed}"
     ((seed_counter++))
-    output=`docker run -e NO_TOKEN=true --rm -it  riscvcourse/workshop_risc-v ${task} --mode=init --seed=${seed}`
+    output=`docker run -e NO_TOKEN=true --rm -it  riscvcourse/workshop_risc-v ${task} --mode init --seed ${seed}`
     if [[ "$?" == "0" ]]
     then 
       if [[ "${output}" == "" ]] || [[ "${output}" == *"None"* ]]
