@@ -6,6 +6,8 @@ class GenerateLab8:
         self.n = n
         self.deep = deep
         self.id = id
+        
+        random.seed(id)
 
         self.n_of_jump = n // 5
         self.n_of_func = n - self.n_of_jump

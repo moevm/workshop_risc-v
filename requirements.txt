@@ -2,3 +2,4 @@
 # pygithub==1.58.1
 numpy==2.0.0
 faker==26.0.0
+networkx==3.4.2
