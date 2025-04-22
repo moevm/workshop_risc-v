@@ -98,7 +98,7 @@ class Lab8Branch(BaseTaskClass):
         for _ in range(self.tests_num):
             generator = GenerateLab8(n=self.n, deep=self.deep, id=self.student_id).generate_asm()
             expected_result = generator[0]
-            print(expected_result)
+            #print(expected_result)
             self.tests.append(TestItem(
                 input_str=f'{expected_result}',
                 showed_input="Generated program analysis",
