@@ -27,9 +27,9 @@ class GenerateLab8:
         self.generate_graph()
 
     def calculate_reg(self):
-        self.a4 = ((self.id % random.randint(3, 7)) + 5) * 10  # min/max = 50/110
-        self.a5 = (self.id // random.randint(10, 100) + random.randint(10, 20))  # id?
-        self.a6 = ((self.id // 100) % 10) + (random.randint(30, 50) - 4)
+        self.a4 = (((self.id % 100_000) % random.randint(3, 7)) + 5) * 10
+        self.a5 = ((self.id % 100_000) // random.randint(10, 100) + random.randint(10, 20))
+        self.a6 = (((self.id % 100_000) // 100) % 10) + (random.randint(30, 50) - 4)
 
     def calculate_flag(self):
         step1 = self.a5 + self.a4
