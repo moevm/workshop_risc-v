@@ -154,6 +154,7 @@ def generate_file(file_name, student_id=123456):
         f.write(asm_code)
 
 def start_gen(n: int, deep: int, student_id: int):
+    random.seed(student_id)
     G = generate_graph(max_nodes=n, max_depth=deep)
 
     # добавляем операции и условия
