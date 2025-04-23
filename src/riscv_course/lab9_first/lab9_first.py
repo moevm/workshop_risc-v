@@ -37,6 +37,7 @@ main:
 
     call solution  # вызов внешней функции с логикой
 
+.globl final
 final:
     bne t3, t4, fail  # если t3 != t4 fail
     j success         # если t3 == t4 success
