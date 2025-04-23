@@ -108,7 +108,7 @@ def add_operations_and_conditions(G, student_id):
 
 def generate_code_from_graph(G, t1, t2, t4):
     # генерирует RISC-V код на основе графа
-    asm_code = ".text\n.globl solution\nsolution:\n"
+    asm_code = ".globl solution\nsolution:\n"
 
     asm_code += f"    li t1, {hex(t1)}\n"
     asm_code += f"    li t2, {hex(t2)}\n"
