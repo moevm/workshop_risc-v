@@ -1,6 +1,9 @@
-from typing import Optional
-import random
 import numpy as np
+import subprocess
+import sys
+from oauth2client.service_account import ServiceAccountCredentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 from ..base_module import BaseTaskClass, TestItem
 from .lab8_gen import GenerateLab8
 
@@ -86,10 +89,47 @@ class Lab8Branch(BaseTaskClass):
             "main.s": MAIN_S,
             "print_result.c": PRINT_RESULT_C,
         }
-    
+        self.url = ''
+
+    def generate_bin(self):
+        filename = self.student_id
+
+        with open(f"{filename}.S", "w", encoding="utf-8") as f:
+            f.write(self.generated_asm)
+
+        try:
+            subprocess.run(
+                ['riscv64-unknown-elf-gcc', '-nostdlib', '-o', f'{filename}.bin', f'{filename}.S']
+            )
+
+        except subprocess.CalledProcessError as e:
+            print(f"Ошибка: {e}", file=sys.stderr)
+            sys.exit(1)
+        except FileNotFoundError:
+            print("Требуется RISC-V toolchain!", file=sys.stderr)
+            print("Установите: sudo apt install gcc-riscv64-unknown-elf", file=sys.stderr)
+            sys.exit(1)
+
+        SERVICE_ACCOUNT = r'mse1h2025-edd2b21768e8.json'  # Please set the file of your credentials of service account.
+        UPLOAD_FILE = f'{filename}.bin'  # Please set the filename with the path you want to upload.
+        FOLDER_ID = '1BjC8f_mctia9CfbgEGlC53dnWG9pR7Cj'  # Please set the folder ID that you shared your folder with the service account.
+        FILENAME = f'{filename}.bin'  # You can set the filename of the uploaded file on Google Drive.
+
+        SCOPES = ['https://www.googleapis.com/auth/drive']
+        credentials = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT, SCOPES)
+        drive = build('drive', 'v3', credentials=credentials)
+        metadata = {'name': FILENAME, "parents": [FOLDER_ID]}
+        file = MediaFileUpload(UPLOAD_FILE, resumable=True)
+        response = drive.files().create(body=metadata, media_body=file).execute()
+        fileId = response.get('id')
+
+        fileUrl = f'https://drive.google.com/file/d/{fileId}/view?usp=sharing'
+        self.url = fileUrl
+
+
     def generate_task(self) -> str:
         return TASK_DESCRIPTION.format(
-            asm_code=self.generated_asm,
+            asm_code=self.url,
             expected_result=self.expected_result
         )
 

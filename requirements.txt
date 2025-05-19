@@ -3,3 +3,5 @@
 numpy==2.0.0
 faker==26.0.0
 networkx==3.4.2
+google-api-python-client==2.169.0
+oauth2client==4.1.3
