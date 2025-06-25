@@ -7,6 +7,7 @@ RUN apt update && \
                    libmpc-dev \
                    gcc \
                    nano \
+                   file \
                    vim && \
     wget -nv -O riscv-toolchain.tar.gz https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2023.10.18/riscv64-glibc-ubuntu-22.04-gcc-nightly-2023.10.18-nightly.tar.gz && \
     tar -xf riscv-toolchain.tar.gz -C /opt/ && \
@@ -23,10 +24,11 @@ COPY pyproject.toml README.md LICENSE ./
 COPY main.py .
 ENTRYPOINT ["python3", "main.py"]
 
-ENV JAIL_PATH /tmp/jail
+ENV JAIL_PATH=/tmp/jail
 RUN mkdir ${JAIL_PATH} &&\
     cp -v --parents $(ldd $(which qemu-riscv64) | egrep -o '/lib.*\.[0-9]') ${JAIL_PATH} &&\
     cp $(which qemu-riscv64) ${JAIL_PATH}
 
 COPY ./src ./src
-RUN pip3 install . && rm -r src requirements.txt pyproject.toml
+COPY ./build.py ./build.py
+RUN pip3 install . && python3 build.py && rm -r src requirements.txt pyproject.toml build.py

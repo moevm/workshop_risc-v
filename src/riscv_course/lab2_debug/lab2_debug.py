@@ -12,9 +12,9 @@ TASK_DESCRIPTION = """
 1. В какой момент регистру a0 намеренно присваивается значение 0? Обратите внимание, что процесс присвоения данного значения будет выполнен не в лоб (a0 = 0), а через инструкции, включающие другие регистры, но гарантированно всегда передающие 0 в a0.
 2. Каким является значение a0 ДО момента из пункта №1 ?
 
-Значение регистра a0  из пункта №2 является ответом на данное задание. Зафиксируйте его и введите при запуске
+Значение регистра a0  из пункта №2 является ответом на данное задание. Зафиксируйте его и введите при запуске 
 
-docker run --rm -it riscvcourse/workshop_risc-v lab2_debug --mode check --seed <seed>
+docker run --rm -it riscvcourse/workshop_risc-v lab2_debug --mode check --seed <seed> --answer <укажите здесь ответ>
 
 Ниже вас ждет терминал для отладки, в котором вам будут доступны утилиты riscv64-unknown-linux-gnu-gcc, qemu-riscv64 и riscv64-unknown-linux-gnu-gdb.
 """
@@ -47,7 +47,7 @@ class Lab2Debug(BaseTaskClass):
         self.print_task_when_i = print_task_when_i
         self.answer = answer
 
-        self.check_files = {
+        self.static_check_files = {
             "print_result.c": PRINT_RESULT_C,
         }
 
@@ -63,11 +63,14 @@ class Lab2Debug(BaseTaskClass):
     def compile(self) -> Optional[str]:
         return None
 
+    def compile_static(self):
+        return self._compile_static_internal(compile_args="-nostdlib -static -g")
+
     def __compile_binary(self, src: str) -> Optional[str]:
         t_files = self.check_files
         self.check_files = {"main.s": src}
         self.solution = ""
-        if (err := self._compile_internal(compile_args="-nostdlib -static -g")) is not None:
+        if (err := self._compile_internal(compile_args="-nostdlib -static -g", keep_static_obj_files=False)) is not None:
             return f"Bad source code generated. Error: {err}.\n" \
                    "Contact to the authors to solve the problem"
         self.check_files = t_files
@@ -87,7 +90,7 @@ class Lab2Debug(BaseTaskClass):
         if self.interactive:
             if self.print_task_when_i:
                 print(task_descp)
-            os.system("rm -rf main.py pyproject.toml requirements.txt src sol.s main.s print_result.c")
+            os.system("rm -rf main.py pyproject.toml requirements.txt src sol.s print_result.c *.o")
             os.execlp("bash", "-c")
         return task_descp
 

@@ -69,7 +69,7 @@ class Lab5Daemon(BaseTaskClass):
         self.task = None
         self.allowed_symbols = [ "delay", "set_led_status", "get_button_status" ]
 
-        self.check_files = {
+        self.static_check_files = {
             "led.cpp": LED_CPP
         }
 
@@ -119,12 +119,6 @@ class Lab5Daemon(BaseTaskClass):
                 compare_func=self._compare_default
             ))
     
-    def compile(self):
-        return self._compile_internal(
-            compiler="riscv64-unknown-linux-gnu-g++",
-            compile_args=f"-static -DTIME_SCALE={self.time_scale} -DN_LEDS={self.n_leds} -DN_BUTTONS={self.n_buttons}"
-        )
-    
     def check_sol_prereq(self) -> Optional[str]:
         lines = self.solution.splitlines()
 
@@ -154,3 +148,12 @@ class Lab5Daemon(BaseTaskClass):
         if len(msgs) == 0:
             return True, "OK"
         return False, "\n".join(msgs)
+
+    def compile(self):
+        return self._compile_internal(compiler="riscv64-unknown-linux-gnu-g++")
+
+    def compile_static(self):
+        return self._compile_static_internal(compiler="riscv64-unknown-linux-gnu-g++")
+
+    def run_solution(self, test: TestItem) -> Optional[str]:
+        return self._run_solution_internal(test, prog_args=f"test {self.n_leds} {self.n_buttons} {self.time_scale}")

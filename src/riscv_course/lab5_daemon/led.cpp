@@ -10,19 +10,11 @@
 #include <csignal> // for SIGSEGV.....
 #include <vector>
 
-#ifndef N_BUTTONS
-#define N_BUTTONS 8
-#endif
+static size_t N_LEDS;
+static size_t N_BUTTONS;
+static size_t TIME_SCALE;
+static size_t THINK_TIME_US;
 
-#ifndef N_LEDS
-#define N_LEDS 8
-#endif
-
-#ifndef TIME_SCALE
-#define TIME_SCALE 3
-#endif
-
-#define THINK_TIME_US ((int)((TIME_SCALE) * 1000))
 #define SLEEP_TIME_US 1000
 
 typedef unsigned long long llu_t;
@@ -400,25 +392,29 @@ void thread_fn()
     }
 }
 
-const char usage_str[] = "usage: ./led [interactive]";
+const char usage_str[] = "usage: led test/interactive N_LEDS N_BUTTONS TIME_SCALE";
 
 int main(int argc, char **argv)
 {
     argc--; argv++;
-    if (argc == 1) {
-        if (strcmp(argv[0], "interactive") == 0) {
-            is_interactive = 1;
-            show_logs = false;
-        }
-        else {
-            fputs(usage_str, stderr);
-            return 1;
-        }
-    }
-    else if (argc > 1) {
-        fputs(usage_str, stderr);
+    if (argc != 4) {
+        std::cerr << usage_str << std::endl;
         return 1;
     }
+
+    if (strcmp(argv[0], "interactive") == 0) {
+        is_interactive = 1;
+        show_logs = false;
+    }
+    else if (strcmp(argv[0], "test") != 0) {
+        std::cerr << usage_str << std::endl;
+        return 1;
+    }
+
+    N_LEDS = atoi(argv[1]);
+    N_BUTTONS = atoi(argv[2]);
+    TIME_SCALE = atoi(argv[3]);
+    THINK_TIME_US = TIME_SCALE * 1000;
 
     std::thread thread(thread_fn);
     try {

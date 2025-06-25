@@ -109,7 +109,7 @@ class Lab1AsmInto(BaseTaskClass):
 
         self.set_minmax_values()
 
-        self.check_files = {
+        self.static_check_files = {
             "main.s": MAIN_S,
             "print_result.c": PRINT_RESULT_C,
         }

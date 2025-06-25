@@ -111,7 +111,7 @@ class Lab3Condition(BaseTaskClass):
         self.max_value = max_value if max_value is not None else np.iinfo(self.int_class).max
         self.task = None
 
-        self.check_files = {
+        self.static_check_files = {
             "main.s": MAIN_S,
             "print_result.c": PRINT_RESULT_C,
         }
