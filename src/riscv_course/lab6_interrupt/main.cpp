@@ -8,29 +8,11 @@
 #include <signal.h>
 #include <stdint.h>
 
-#ifndef MAX_N_ENTRIES
 #define MAX_N_ENTRIES 32
-#endif
-
-#ifndef A_TYPE
-#define A_TYPE int64_t
-#endif
-
-#ifndef B_TYPE
-#define B_TYPE int64_t
-#endif
-
-#ifndef C_TYPE
-#define C_TYPE int64_t
-#endif
-
-#ifndef RESULT_TYPE
-#define RESULT_TYPE int64_t
-#endif
 
 #pragma pack(push, 1)
 struct entry_t {
-    RESULT_TYPE (*function_ptr)();
+    int64_t (*function_ptr)();
     int16_t cnt;
 };
 
@@ -50,9 +32,9 @@ enum location_t {
 };
 
 // global symbols
-A_TYPE a;
-B_TYPE b;
-C_TYPE c;
+int64_t a;
+int64_t b;
+int64_t c;
 table_t listener_table;
 
 // local symbols
@@ -67,7 +49,7 @@ static const char *err_msg;
 extern "C" void load();
 extern "C" void unload();
 
-RESULT_TYPE basic_handler()
+int64_t basic_handler()
 {
     return 0;
 }
@@ -146,10 +128,10 @@ void run_tests()
         entry_t entry_old = entry;
 
         // std::cin interprets int8_t as characters, not numbers... so these things are uintmax_t...
-        uintmax_t a_copy;
-        uintmax_t b_copy;
-        uintmax_t c_copy;
-        uintmax_t expected;
+        int64_t a_copy;
+        int64_t b_copy;
+        int64_t c_copy;
+        int64_t expected;
 
         std::cin >> a_copy >> b_copy >> c_copy >> expected;
         
@@ -158,18 +140,18 @@ void run_tests()
         c = c_copy;
 
         location = STUDWORK_CODE;
-        RESULT_TYPE res = entry.function_ptr();
+        int64_t res = entry.function_ptr();
         location = CHECKER_CODE;
 
         if (res != expected) {
             throw std::runtime_error(
                 "Неправильный ответ\n"
                 "  Входные данные: "
-                      "a = " + std::to_string((A_TYPE)a_copy) +
-                    ", b = " + std::to_string((B_TYPE)b_copy) +
-                    ", c = " + std::to_string((C_TYPE)c_copy) + "\n"
+                      "a = " + std::to_string(a_copy) +
+                    ", b = " + std::to_string(b_copy) +
+                    ", c = " + std::to_string(c_copy) + "\n"
                 "  Результат: a0 = " + std::to_string(res) + "\n"
-                "  Ожидалось: a0 = " + std::to_string((RESULT_TYPE)expected)
+                "  Ожидалось: a0 = " + std::to_string(expected)
             );
         }
         

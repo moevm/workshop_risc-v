@@ -68,25 +68,20 @@ MAIN_CPP = open(os.path.dirname(os.path.realpath(__file__)) + "/main.cpp").read(
 class Lab6Interrupt(BaseTaskClass):
     def __init__(
         self,
-        a_type, b_type, c_type, result_type,
         a_min, a_max, b_min, b_max, c_min, c_max,
         *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
+        
         self.task = None
-        self.a_type, self.a_min, self.a_max = int_utils.numpify_int_type(a_type, a_min, a_max)
-        self.b_type, self.b_min, self.b_max = int_utils.numpify_int_type(b_type, b_min, b_max)
-        self.c_type, self.c_min, self.c_max = int_utils.numpify_int_type(c_type, c_min, c_max)
-        self.result_type = int_utils.INT_TYPES[result_type]
-
-        self.a_ctype = int_utils.get_ctype_name(a_type)
-        self.b_ctype = int_utils.get_ctype_name(b_type)
-        self.c_ctype = int_utils.get_ctype_name(c_type)
-        self.result_ctype = int_utils.get_ctype_name(result_type)
+        self.a_type, self.a_min, self.a_max = int_utils.numpify_int_type("int64", a_min, a_max)
+        self.b_type, self.b_min, self.b_max = int_utils.numpify_int_type("int64", b_min, b_max)
+        self.c_type, self.c_min, self.c_max = int_utils.numpify_int_type("int64", c_min, c_max)
+        self.result_type = np.int64
 
         self.allowed_symbols = [ "a", "b", "c", "listener_table" ]
 
-        self.check_files = {
+        self.static_check_files = {
             "main.cpp": MAIN_CPP
         }
 
@@ -128,10 +123,10 @@ class Lab6Interrupt(BaseTaskClass):
             ))
     
     def compile(self):
-        return self._compile_internal(
-            compiler="riscv64-unknown-linux-gnu-g++",
-            compile_args=f"-static -DA_TYPE={self.a_ctype} -DB_TYPE={self.b_ctype} -DC_TYPE={self.c_ctype} -DRESULT_TYPE={self.result_ctype}"
-        )
+        return self._compile_internal(compiler="riscv64-unknown-linux-gnu-g++")
+
+    def compile_static(self):
+        return self._compile_static_internal(compiler="riscv64-unknown-linux-gnu-g++")
 
     def check_sol_prereq(self) -> Optional[str]:
         lines = self.solution.splitlines()

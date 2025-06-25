@@ -32,6 +32,7 @@ class BaseTaskClass:
     ):
         self.solution = ""
         self.check_files = {}
+        self.static_check_files = {}
         self.prog_name = compile_name
         self.seed = seed
         self.tests_num = tests_num
@@ -78,43 +79,17 @@ class BaseTaskClass:
 
         return None  # check is passed
 
-    def _compile_internal(
-        self, solution_name: str = "sol.s",
-        compiler: str = "riscv64-unknown-linux-gnu-gcc",
-        compile_args: str = "-static"
-    ) -> Optional[str]:
-        """
-        General method to compile work
-        Return value is the same as in `check_sol_prereq` method
-        """
-        # Dump files into filesystem
-        for name, content in self.check_files.items():
+    @staticmethod
+    def _dump_files(files):
+        for name, content in files.items():
             with open(name, "w", encoding="utf-8") as f:
                 f.write(content)
 
-        with open(solution_name, "w", encoding="utf-8") as f:
-            f.write(self.solution)
-            f.write("\n")
-
+    def _compile_file(self, file: str, compiler: str, compile_args: str, output: str = None):
+        if output is not None:
+            compile_args += f" -o {output}"
         
-        # Compile checker code
-        obj_files = []
-        studwork_obj = os.path.join(self.jail_path, 'studwork.o')
-
-        for src_file in self.check_files.keys():
-            compile_command = f"{compiler} -c {compile_args} {src_file}"
-            p = subprocess.run(
-                shlex.split(compile_command),
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                timeout=self.compile_timeout, check=False,
-            )
-
-            if p.returncode != 0:
-                return f"Ошибка при компиляции кода системы проверки, файл {src_file} (обратитесь за помощью к авторам курса):\n{p.stdout.decode()}"
-            obj_files.append(src_file[:src_file.find('.')+1] + "o")
-
-        # Compile studwork
-        compile_command = f"{compiler} -c {compile_args} {solution_name} -o {studwork_obj}"
+        compile_command = f"{compiler} -c {compile_args} {file}"
         p = subprocess.run(
             shlex.split(compile_command),
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -122,8 +97,67 @@ class BaseTaskClass:
         )
 
         if p.returncode != 0:
-            return f"Ошибка при компиляции решения:\n{p.stdout.decode()}"
+            return p.stdout.decode()
+        return None
 
+    def _compile_static_internal(
+        self, compiler: str = "riscv64-unknown-linux-gnu-gcc",
+        compile_args: str = "-static"
+    ) -> Optional[str]:
+        """
+        General method to compile static object files
+        Return value is the same as in `check_sol_prereq` method
+        """
+        self.static_check_files = {self.__class__.__name__ + "_" + x: y for x, y in self.static_check_files.items()}
+        self._dump_files(self.static_check_files)
+
+        for src_file in self.static_check_files.keys():
+            err = self._compile_file(src_file, compiler, compile_args)
+            if err is not None:
+                return f"Ошибка при компиляции кода системы проверки, файл {src_file}:\n{err}"
+            os.remove(src_file)
+
+        return None
+    
+    def compile_static(self) -> Optional[str]:
+        """
+        Derived classes must override this method
+        """
+        return self._compile_static_internal()
+
+    def _compile_internal(
+        self, solution_name: str = "sol.s",
+        compiler: str = "riscv64-unknown-linux-gnu-gcc",
+        compile_args: str = "-static",
+        keep_static_obj_files: bool = True 
+    ) -> Optional[str]:
+        """
+        General method to compile work
+        Return value is the same as in `check_sol_prereq` method
+        """
+        # Dump files into filesystem
+        self._dump_files(self.check_files)
+        
+        with open(solution_name, "w", encoding="utf-8") as f:
+            f.write(self.solution)
+            f.write("\n")
+        
+        # Compile checker code
+        obj_files = []
+        studwork_obj = os.path.join(self.jail_path, 'studwork.o')
+
+        for src_file in self.check_files.keys():
+            err = self._compile_file(src_file, compiler, compile_args)
+            if err is not None:
+                return f"Ошибка при компиляции кода системы проверки, файл {src_file} (обратитесь за помощью к авторам курса):\n{err}"
+            
+            obj_files.append(src_file[:src_file.find('.')+1] + "o")
+
+        # Compile studwork
+        err = self._compile_file(solution_name, compiler, compile_args, studwork_obj)
+        if err is not None:
+            return f"Ошибка при компиляции решения:\n{err}"
+        
         p = subprocess.run(
             shlex.split(f"nm -a {studwork_obj}"),
             stdout=subprocess.PIPE, check=False,
@@ -134,6 +168,11 @@ class BaseTaskClass:
         forbidden_symbols = [x[-1]  for x in symbols if x[-2] == "U" and x[-1] not in self.allowed_symbols]
         if len(forbidden_symbols) > 1:
             return f"В решении использованы запрещенные символы: " + ", ".join(forbidden_symbols)
+
+        # Из-за этих двух строчек происходит ошибка компиляции бинарника для лабы 2
+        if keep_static_obj_files:
+            static_obj_files = {self.__class__.__name__ + "_" + x[:x.find('.')] + '.o': y for x, y in self.static_check_files.items()}
+            obj_files += static_obj_files
 
         compile_command = f"{compiler} {' '.join(obj_files)} {studwork_obj} {compile_args} -o {os.path.join(self.jail_path, self.prog_name)}"
         p = subprocess.run(

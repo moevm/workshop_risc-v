@@ -1,4 +1,3 @@
-# run_flags: --a-type=int8 --b-type=int16 --c-type=int8 --result-type=int16
 
 .text
 on_event:

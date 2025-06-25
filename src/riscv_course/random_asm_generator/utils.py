@@ -41,7 +41,7 @@ def generate_registers_init_sequence():
 
 def generate_plain_line(immidiate = True):
     r1 = choice(REGISTERS)
-    registers = REGISTERS
+    registers = REGISTERS[:]
     if immidiate:
         r3 = randint(MIN_VAL, MAX_VAL)
         command = choice(IMMIDIATE_COMMANDS)
